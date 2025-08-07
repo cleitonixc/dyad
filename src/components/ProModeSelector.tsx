@@ -13,32 +13,25 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Sparkles, Info } from "lucide-react";
 import { useSettings } from "@/hooks/useSettings";
-import { IpcClient } from "@/ipc/ipc_client";
-import { hasDyadProKey } from "@/lib/schemas";
 
 export function ProModeSelector() {
   const { settings, updateSettings } = useSettings();
 
-  const toggleLazyEdits = () => {
+  const toggleLocalTurboEdits = () => {
     updateSettings({
-      enableProLazyEditsMode: !settings?.enableProLazyEditsMode,
+      enableLocalTurboEdits: !settings?.enableLocalTurboEdits,
     });
   };
 
-  const toggleSmartContext = () => {
+  const toggleLocalSmartContext = () => {
     updateSettings({
-      enableProSmartFilesContextMode: !settings?.enableProSmartFilesContextMode,
+      enableLocalSmartContext: !settings?.enableLocalSmartContext,
     });
   };
 
-  const toggleProEnabled = () => {
-    updateSettings({
-      enableDyadPro: !settings?.enableDyadPro,
-    });
-  };
-
-  const hasProKey = settings ? hasDyadProKey(settings) : false;
-  const proModeTogglable = hasProKey && Boolean(settings?.enableDyadPro);
+  // Pro features são sempre locais agora
+  const proFeaturesAvailable = true;
+  const isLocalMode = true;
 
   return (
     <Popover>
@@ -55,58 +48,56 @@ export function ProModeSelector() {
             </Button>
           </PopoverTrigger>
         </TooltipTrigger>
-        <TooltipContent>Configure Dyad Pro settings</TooltipContent>
+        <TooltipContent>Configure Pro Features settings</TooltipContent>
       </Tooltip>
       <PopoverContent className="w-80 border-primary/20">
         <div className="space-y-4">
           <div className="space-y-1">
             <h4 className="font-medium flex items-center gap-1.5">
               <Sparkles className="h-4 w-4 text-primary" />
-              <span className="text-primary font-medium">Dyad Pro</span>
+              <span className="text-primary font-medium">Pro Features</span>
             </h4>
             <div className="h-px bg-gradient-to-r from-primary/50 via-primary/20 to-transparent" />
           </div>
-          {!hasProKey && (
-            <div className="text-sm text-center text-muted-foreground">
-              <a
-                className="inline-flex items-center justify-center gap-2 rounded-md border border-primary/30 bg-primary/10 px-3 py-2 text-sm font-medium text-primary shadow-sm transition-colors hover:bg-primary/20 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                onClick={() => {
-                  IpcClient.getInstance().openExternalUrl(
-                    "https://dyad.sh/pro#ai",
-                  );
-                }}
-              >
-                Unlock Pro modes
-              </a>
-            </div>
-          )}
+
+          <div className="text-xs text-muted-foreground bg-green-50 dark:bg-green-900/20 p-2 rounded-md border border-green-200 dark:border-green-800">
+            ✨ Pro features agora rodam localmente! Sem limites de uso ou custos
+            extras.
+          </div>
+
           <div className="flex flex-col gap-5">
             <SelectorRow
-              id="pro-enabled"
-              label="Enable Dyad Pro"
-              description="Use Dyad Pro AI credits"
-              tooltip="Uses Dyad Pro AI credits for the main AI model and Pro modes."
-              isTogglable={hasProKey}
-              settingEnabled={Boolean(settings?.enableDyadPro)}
-              toggle={toggleProEnabled}
+              id="pro-features-mode"
+              label="Modo das Funcionalidades"
+              description={
+                isLocalMode ? "Rodando localmente" : "Usando serviço externo"
+              }
+              tooltip={
+                isLocalMode
+                  ? "As funcionalidades Pro estão rodando localmente no seu computador"
+                  : "As funcionalidades Pro estão usando o serviço externo Dyad Pro"
+              }
+              isTogglable={false}
+              settingEnabled={isLocalMode}
+              toggle={() => {}} // Não há mais toggle entre modos
             />
             <SelectorRow
-              id="lazy-edits"
+              id="local-turbo-edits"
               label="Turbo Edits"
-              description="Makes file edits faster and cheaper"
-              tooltip="Uses a faster, cheaper model to generate full file updates."
-              isTogglable={proModeTogglable}
-              settingEnabled={Boolean(settings?.enableProLazyEditsMode)}
-              toggle={toggleLazyEdits}
+              description="Edições de arquivo mais rápidas e inteligentes"
+              tooltip="Usa templates otimizados e seleção inteligente de modelo para edições mais eficientes."
+              isTogglable={proFeaturesAvailable}
+              settingEnabled={Boolean(settings?.enableLocalTurboEdits)}
+              toggle={toggleLocalTurboEdits}
             />
             <SelectorRow
-              id="smart-context"
+              id="local-smart-context"
               label="Smart Context"
-              description="Optimizes your AI's code context"
-              tooltip="Improve efficiency and save credits working on large codebases."
-              isTogglable={proModeTogglable}
-              settingEnabled={Boolean(settings?.enableProSmartFilesContextMode)}
-              toggle={toggleSmartContext}
+              description="Seleção inteligente de contexto de código"
+              tooltip="Analisa dependências e seleciona automaticamente os arquivos mais relevantes para o contexto."
+              isTogglable={proFeaturesAvailable}
+              settingEnabled={Boolean(settings?.enableLocalSmartContext)}
+              toggle={toggleLocalSmartContext}
             />
           </div>
         </div>
@@ -137,7 +128,7 @@ function SelectorRow({
       <div className="space-y-1.5">
         <Label
           htmlFor={id}
-          className={!isTogglable ? "text-muted-foreground/50" : ""}
+          className={isTogglable ? "" : "text-muted-foreground/50"}
         >
           {label}
         </Label>
@@ -145,7 +136,7 @@ function SelectorRow({
           <Tooltip>
             <TooltipTrigger asChild>
               <Info
-                className={`h-4 w-4 cursor-help ${!isTogglable ? "text-muted-foreground/50" : "text-muted-foreground"}`}
+                className={`h-4 w-4 cursor-help ${isTogglable ? "text-muted-foreground" : "text-muted-foreground/50"}`}
               />
             </TooltipTrigger>
             <TooltipContent side="right" className="max-w-72">
@@ -153,7 +144,7 @@ function SelectorRow({
             </TooltipContent>
           </Tooltip>
           <p
-            className={`text-xs ${!isTogglable ? "text-muted-foreground/50" : "text-muted-foreground"} max-w-55`}
+            className={`text-xs ${isTogglable ? "text-muted-foreground" : "text-muted-foreground/50"} max-w-55`}
           >
             {description}
           </p>

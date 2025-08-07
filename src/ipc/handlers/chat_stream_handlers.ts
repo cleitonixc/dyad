@@ -382,6 +382,7 @@ ${componentSnippet}
         const { formattedOutput: codebaseInfo, files } = await extractCodebase({
           appPath,
           chatContext,
+          prompt: req.prompt,
         });
 
         logger.log(`Extracted codebase information from ${appPath}`);
@@ -788,6 +789,7 @@ ${problemReport.problems
                     appPath,
                     chatContext,
                     virtualFileSystem,
+                    prompt: problemFixPrompt,
                   });
                 const { modelClient } = await getModelClient(
                   settings.selectedModel,

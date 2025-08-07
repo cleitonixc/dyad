@@ -158,8 +158,22 @@ export const UserSettingsSchema = z.object({
   lastShownReleaseNotesVersion: z.string().optional(),
   maxChatTurnsInContext: z.number().optional(),
   thinkingBudget: z.enum(["low", "medium", "high"]).optional(),
-  enableProLazyEditsMode: z.boolean().optional(),
-  enableProSmartFilesContextMode: z.boolean().optional(),
+
+  // Smart Context Local Settings
+  enableLocalSmartContext: z.boolean().optional(),
+  smartContextSensitivity: z
+    .enum(["conservative", "balanced", "aggressive"])
+    .optional(),
+  smartContextMaxTokens: z.number().min(1000).max(50000).optional(),
+  smartContextDependencyDepth: z.number().min(1).max(5).optional(),
+
+  // Turbo Edits Local Settings
+  enableLocalTurboEdits: z.boolean().optional(),
+  turboEditsComplexityThreshold: z
+    .enum(["simple", "moderate", "all"])
+    .optional(),
+  turboEditsModelStrategy: z.enum(["fast", "balanced", "quality"]).optional(),
+
   selectedTemplateId: z.string(),
   enableSupabaseWriteSqlMigration: z.boolean().optional(),
   selectedChatMode: ChatModeSchema.optional(),

@@ -1,4 +1,4 @@
-import { isDyadProEnabled, type LargeLanguageModel } from "@/lib/schemas";
+import type { LargeLanguageModel } from "@/lib/schemas";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -119,8 +119,7 @@ export function ModelPicker() {
     return null;
   }
   const selectedModel = settings?.selectedModel;
-  const isSmartAutoEnabled =
-    settings.enableProSmartFilesContextMode && isDyadProEnabled(settings);
+  const isSmartAutoEnabled = settings.enableLocalSmartContext;
   const modelDisplayName = getModelDisplayName();
 
   return (

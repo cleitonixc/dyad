@@ -5,7 +5,7 @@ import { UserSettingsSchema, type UserSettings, Secret } from "../lib/schemas";
 import { safeStorage } from "electron";
 import { v4 as uuidv4 } from "uuid";
 import log from "electron-log";
-import { DEFAULT_TEMPLATE_ID } from "@/shared/templates";
+import { DEFAULT_TEMPLATE_ID } from "../shared/templates";
 
 const logger = log.scope("settings");
 
@@ -21,8 +21,18 @@ const DEFAULT_SETTINGS: UserSettings = {
   telemetryUserId: uuidv4(),
   hasRunBefore: false,
   experiments: {},
-  enableProLazyEditsMode: true,
-  enableProSmartFilesContextMode: true,
+
+  // Smart Context Local - funcionalidade principal
+  enableLocalSmartContext: true,
+  smartContextSensitivity: "balanced",
+  smartContextMaxTokens: 20000,
+  smartContextDependencyDepth: 2,
+
+  // Turbo Edits Local - funcionalidade principal
+  enableLocalTurboEdits: true,
+  turboEditsComplexityThreshold: "moderate",
+  turboEditsModelStrategy: "balanced",
+
   selectedChatMode: "build",
   enableAutoFixProblems: false,
   enableAutoUpdate: true,
@@ -115,7 +125,8 @@ export function readSettings(): UserSettings {
       }
     }
 
-    // Validate and merge with defaults
+    // Para ambiente de desenvolvimento, apenas validar as configurações finais
+    // Novos usuários já recebem as configurações corretas via DEFAULT_SETTINGS
     const validatedSettings = UserSettingsSchema.parse(combinedSettings);
 
     return validatedSettings;

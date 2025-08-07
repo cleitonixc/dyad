@@ -6,8 +6,9 @@ import log from "electron-log";
 import { IS_TEST_BUILD } from "../ipc/utils/test_utils";
 import { glob } from "glob";
 import { AppChatContext } from "../lib/schemas";
-import { readSettings } from "@/main/settings";
+import { readSettings } from "../main/settings";
 import { AsyncVirtualFileSystem } from "../../shared/VirtualFilesystem";
+import { createSmartContextProcessor } from "../ipc/processors/smart_context_processor";
 
 const logger = log.scope("utils/codebase");
 
@@ -426,17 +427,18 @@ export async function extractCodebase({
   appPath,
   chatContext,
   virtualFileSystem,
+  prompt,
 }: {
   appPath: string;
   chatContext: AppChatContext;
   virtualFileSystem?: AsyncVirtualFileSystem;
+  prompt?: string;
 }): Promise<{
   formattedOutput: string;
   files: CodebaseFile[];
 }> {
   const settings = readSettings();
-  const isSmartContextEnabled =
-    settings?.enableDyadPro && settings?.enableProSmartFilesContextMode;
+  const isLocalSmartContextEnabled = settings?.enableLocalSmartContext;
 
   try {
     await fsAsync.access(appPath);
@@ -498,7 +500,7 @@ export async function extractCodebase({
 
   // Add files from smartContextAutoIncludes
   if (
-    isSmartContextEnabled &&
+    isLocalSmartContextEnabled &&
     smartContextAutoIncludes &&
     smartContextAutoIncludes.length > 0
   ) {
@@ -550,9 +552,49 @@ export async function extractCodebase({
     files = files.filter((file) => !excludedFiles.has(path.normalize(file)));
   }
 
+  // Apply local Smart Context if enabled and prompt is provided
+  let finalFiles = [...new Set(files)];
+  if (isLocalSmartContextEnabled && prompt && prompt.trim()) {
+    try {
+      const smartContextProcessor = createSmartContextProcessor(settings);
+
+      // Convert absolute paths to relative for the processor
+      const relativeFiles = finalFiles.map((file) =>
+        path.relative(appPath, file).split(path.sep).join("/"),
+      );
+
+      const optimization =
+        await smartContextProcessor.analyzeCodebaseForContext(
+          prompt,
+          appPath,
+          relativeFiles,
+        );
+
+      // Convert relative paths back to absolute
+      const optimizedAbsoluteFiles = optimization.selectedFiles.map(
+        (relativePath) => path.resolve(appPath, relativePath),
+      );
+
+      // Merge with manually included files (from contextPaths)
+      const manuallyIncluded = Array.from(includedFiles);
+
+      // Combine smart selection with manual selection
+      finalFiles = [
+        ...new Set([...manuallyIncluded, ...optimizedAbsoluteFiles]),
+      ];
+
+      logger.info(
+        `Smart Context Local: selecionou ${optimization.selectedFiles.length} arquivos de ${relativeFiles.length} disponíveis (${Math.round(optimization.relevanceRatio * 100)}% relevância, ${optimization.totalTokens} tokens estimados, processado em ${optimization.processingTime}ms)`,
+      );
+    } catch (error) {
+      logger.warn("Erro no Smart Context Local, usando seleção padrão:", error);
+      // Fallback para seleção padrão em caso de erro
+    }
+  }
+
   // Sort files by modification time (oldest first)
   // This is important for cache-ability.
-  const sortedFiles = await sortFilesByModificationTime([...new Set(files)]);
+  const sortedFiles = await sortFilesByModificationTime(finalFiles);
 
   // Format files and collect individual file contents
   const filesArray: CodebaseFile[] = [];

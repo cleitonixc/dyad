@@ -112,8 +112,7 @@ export function ContextFilesPicker() {
     updateExcludePaths(newPaths);
   };
 
-  const isSmartContextEnabled =
-    settings?.enableDyadPro && settings?.enableProSmartFilesContextMode;
+  const isSmartContextEnabled = settings?.enableLocalSmartContext;
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -152,11 +151,14 @@ export function ContextFilesPicker() {
                   <TooltipContent className="max-w-[300px]">
                     {isSmartContextEnabled ? (
                       <p>
-                        With Smart Context, Dyad uses the most relevant files as
-                        context.
+                        Com Smart Context ativo, o Dyad seleciona
+                        automaticamente os arquivos mais relevantes como
+                        contexto. Processado localmente.
                       </p>
                     ) : (
-                      <p>By default, Dyad uses your whole codebase.</p>
+                      <p>
+                        Por padrão, o Dyad usa toda a codebase como contexto.
+                      </p>
                     )}
                   </TooltipContent>
                 </Tooltip>
@@ -321,21 +323,30 @@ export function ContextFilesPicker() {
           {isSmartContextEnabled && (
             <div className="pt-2">
               <div>
-                <h3 className="font-medium">Smart Context Auto-includes</h3>
+                <h3 className="font-medium flex items-center gap-2">
+                  Smart Context Auto-includes
+                  {settings?.enableLocalSmartContext && (
+                    <span className="text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 px-2 py-1 rounded-full">
+                      🏠 Local
+                    </span>
+                  )}
+                </h3>
                 <p className="text-sm text-muted-foreground">
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="flex items-center gap-1 cursor-help">
-                          These files will always be included in the context.{" "}
+                          Estes arquivos sempre serão incluídos no contexto.{" "}
                           <InfoIcon className="ml-2 size-4" />
                         </span>
                       </TooltipTrigger>
                       <TooltipContent className="max-w-[300px]">
                         <p>
-                          Auto-include files are always included in the context
-                          in addition to the files selected as relevant by Smart
-                          Context.
+                          Arquivos auto-incluídos sempre fazem parte do
+                          contexto, além dos arquivos selecionados como
+                          relevantes pelo Smart Context.
+                          {settings?.enableLocalSmartContext &&
+                            " Processamento 100% local."}
                         </p>
                       </TooltipContent>
                     </Tooltip>
